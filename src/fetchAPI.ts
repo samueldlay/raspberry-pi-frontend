@@ -10,11 +10,13 @@ export function getFiles(fetchUrl: string) {
     const fetchedFiles = async () => {
       try {
         // const url = new URL(fetchUrl, window.location.href);
-        console.log("href:", window.location.href);
+        const serverURL = import.meta.env.PROD ? window.location.href : import.meta.env.VITE_SERVER;
+        console.log("SERVER URL:", serverURL);
+        console.log("IS IN PROD:", import.meta.env.PROD);
         if (!auth) throw new Error("No auth");
         if (!auth.user) throw new Error("No user");
         const token = auth.user.token;
-        const url = new URL(fetchUrl, "https://10.0.0.96:8080");
+        const url = new URL(fetchUrl, serverURL);
         const res = await fetch(url, {
           method: "POST",
           mode: "cors",

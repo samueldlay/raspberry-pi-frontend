@@ -43,6 +43,8 @@ function Layout() {
   return (
     <div className="flex flex-col content-center items-center gap-4">
       <AuthStatus />
+      <h1>{import.meta.env.PROD ? "Production Build" : "Client Build"}</h1>
+      <h1>HREF: {window.location.href}</h1>
       <ul>
         {!auth?.user ? (
           <li>

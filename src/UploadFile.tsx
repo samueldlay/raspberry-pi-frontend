@@ -26,7 +26,9 @@ export default function UploadFile(): ReactElement {
     formData.append("file", selectedFile);
     // UP NEXT: UPDATE FILES AFTER UPLOAD
     try {
-      const url = new URL("https://10.0.0.96:8080/api/upload");
+      const serverURL = import.meta.env.PROD ? window.location.href : import.meta.env.VITE_SERVER;
+      const url = new URL("/api/upload", serverURL)
+      // const url = new URL("https://10.0.0.96:8080/api/upload");
       const response = await fetch(url, {
         method: "POST",
         headers: {

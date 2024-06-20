@@ -22,7 +22,9 @@ export default function CreateAccount() {
         return;
       }
       try {
-        const res = await fetch("https://10.0.0.96:8080/api/createAccount", {
+        const serverURL = import.meta.env.PROD ? window.location.href : import.meta.env.VITE_SERVER;
+        const url = new URL("/api/createAccount", serverURL)
+        const res = await fetch(url, {
           method: "POST",
           mode: "cors",
           headers: {
