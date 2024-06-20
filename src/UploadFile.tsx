@@ -5,10 +5,8 @@ import { getFiles } from "./fetchAPI";
 
 export default function UploadFile(): ReactElement {
   const auth = useAuth();
-  const userFiles = getFiles("/api/files");
+  const { files, setFiles } = getFiles("/api/files");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  // const [files, setFiles] = useState<string[]>(userFiles);
-
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -38,18 +36,19 @@ export default function UploadFile(): ReactElement {
         body: formData
       });
 
-      if (response.ok) {
-        setSelectedFile(null);
-      }
-      else throw new Error(response.statusText);
+      if (!response.ok) throw new Error(response.statusText);
+
+      const data = await response.json() as string[];
+
+      setSelectedFile(null); // TODO: update file state
+      setFiles(data);
+
     } catch (error) {
       if (error instanceof Error) {
         console.error("ERROR:", error.message);
-        // setServerResponse(error.message);
       }
       else {
         console.error('Error uploading file:', error);
-        // setServerResponse(JSON.stringify(error));
       }
     }
   };
@@ -68,7 +67,7 @@ export default function UploadFile(): ReactElement {
         <h1 className="text-4xl">Files:</h1>
         <ul>
           {
-            userFiles?.map((file, index) => <li className="text-xl" key={file}>{index + 1}.) {file}</li>)
+            files?.map((file, index) => <li className="text-xl" key={file}>{index + 1}.) {file}</li>)
           }
         </ul>
       </div>

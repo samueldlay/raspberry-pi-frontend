@@ -36,5 +36,5 @@ export function getFiles(fetchUrl: string) {
     fetchedFiles();
   }, [fetchUrl, auth]);
 
-  return files;
+  return { files, setFiles };
 }
