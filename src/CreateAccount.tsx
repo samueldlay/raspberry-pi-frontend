@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Input, Button } from "@nextui-org/react";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateAccount() {
   const [user, setUser] = useState({
@@ -10,6 +11,8 @@ export default function CreateAccount() {
   const [resultData, setResultData] = useState("");
   const [passwordError, setPasswordError] = useState(false);
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (ev: React.FormEvent<HTMLFormElement>) => {
     setPasswordError(false);
     ev.preventDefault();
@@ -19,7 +22,7 @@ export default function CreateAccount() {
         return;
       }
       try {
-        const res = await fetch("https://10.0.0.96:8080/createAccount", {
+        const res = await fetch("https://10.0.0.96:8080/api/createAccount", {
           method: "POST",
           mode: "cors",
           headers: {
@@ -27,10 +30,11 @@ export default function CreateAccount() {
           },
           body: JSON.stringify({ ...user }),
         });
+        if (!res.ok) throw new Error("Unable to create account");
         const result = await res.json() as { message: string, userID: string, email: string };
         console.log(result);
-        localStorage.setItem("raspi-user", result.userID);
         setResultData(JSON.stringify(result));
+        navigate("/login", { replace: true });
       } catch (exc) {
         if (exc instanceof Error) {
           console.error(exc.message);

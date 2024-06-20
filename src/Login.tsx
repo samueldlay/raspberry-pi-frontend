@@ -1,20 +1,25 @@
 
 import { Input, Button } from "@nextui-org/react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "./Authentication";
 
-export default function Login({ handleSubmit }: { handleSubmit: (result: string | { email: string, userID: string, result: boolean, token: string, files: string[] }) => void }) {
+export default function Login() {
   const [user, setUser] = useState({
     email: "",
     password: "",
   });
-  const [resultData, setResultData] = useState("");
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname ?? "/";
+
 
   const handleSubmitForm = async (ev: React.FormEvent<HTMLFormElement>) => {
     ev.preventDefault();
     if (user.password && user.email) {
       try {
-        const res = await fetch("https://10.0.0.96:8080/login", {
+        const res = await fetch("https://10.0.0.96:8080/api/login", {
           method: "POST",
           mode: "cors",
           headers: {
@@ -23,28 +28,32 @@ export default function Login({ handleSubmit }: { handleSubmit: (result: string 
           body: JSON.stringify(user),
         });
         if (!res.ok) throw new Error("BIG PROBLEM");
-        const data = await res.json() as { result: boolean, userID: string, email: string, token: string, files: string[] };
+        const data = await res.json() as { result: boolean, userID: string, email: string, token: string, mapped: string[] };
         console.log(data);
-        setResultData(JSON.stringify(data));
-        handleSubmit(data);
+        if (data.result === true) {
+          auth?.signin(data, () => {
+            localStorage.setItem("raspi-user", JSON.stringify({ userID: data.userID, email: data.email, token: data.token }));
+            navigate(from, { replace: true });
+          });
+        } else throw new Error("Not verified")
       } catch (exc) {
         if (exc instanceof Error) {
           console.error(exc.message);
-          handleSubmit(exc.message);
         }
         console.error(JSON.stringify(exc));
-        handleSubmit(JSON.stringify(exc));
       }
     }
   };
 
   const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value, placeholder } = event.target;
-    console.log({ value, placeholder })
     setUser((user) => {
       return { ...user, [placeholder]: value };
     });
   };
+
+  if (auth?.user?.token) return <Navigate to={"/"} replace />; // resolve this component update issue
+
   return (
     <form onSubmit={handleSubmitForm} className="w-1/2 flex flex-col gap-4 items-center">
       <Input
@@ -69,7 +78,6 @@ export default function Login({ handleSubmit }: { handleSubmit: (result: string 
         Log In
       </Button>
       <p>Don't have an account?</p><Link style={{ textDecoration: "underline" }} to="/createAccount"> Create an account here!</Link>
-      {resultData ? <h2>{resultData}</h2> : null}
     </form>
   );
 }

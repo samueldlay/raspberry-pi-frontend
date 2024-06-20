@@ -3,7 +3,6 @@ import {
   Routes,
   Route,
   Link,
-  useNavigate,
   useLocation,
   Navigate,
   Outlet,
@@ -11,7 +10,6 @@ import {
 import { fakeAuthProvider } from "./auth";
 import UploadFile from "./UploadFile";
 import Login from "./Login";
-import { useState } from "react";
 import CreateAccount from "./CreateAccount";
 
 const AuthContext = React.createContext<AuthContextType | null>(null);
@@ -21,8 +19,8 @@ export function useAuth() {
 }
 
 interface AuthContextType {
-  user: { email: string, userID: string, token: string, files: string[] } | null;
-  signin: (user: { email: string, userID: string, token: string, files: string[] }, callback: VoidFunction) => void;
+  user: { email: string, userID: string, token: string, mapped: string[] } | null;
+  signin: (user: { email: string, userID: string, token: string, mapped: string[] }, callback: VoidFunction) => void;
   signout: (callback: VoidFunction) => void;
 }
 
@@ -43,7 +41,7 @@ function AuthStatus() {
 function Layout() {
   const auth = useAuth();
   return (
-    <div>
+    <div className="flex flex-col content-center items-center gap-4">
       <AuthStatus />
       <ul>
         {!auth?.user ? (
@@ -67,52 +65,14 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
   if (!storedUser && !auth?.user) {
     console.log("no user stored");
-    // Redirect them to the /login page, but save the current location they were
-    // trying to go to when they were redirected. This allows us to send them
-    // along to that page after they login, which is a nicer user experience
-    // than dropping them off on the home page.
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
 }
 
-function LoginPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const auth = useAuth();
-
-  const from = location.state?.from?.pathname ?? "/";
-
-  const [error, setError] = useState(false);
-
-  function handleSubmit(
-    data: { result: boolean; userID: string; email: string; token: string; files: string[] } | string,
-  ) {
-    if (typeof data === "object" && "result" in data && data.result === true) {
-      auth?.signin(data, () => {
-        // Send them back to the page they tried to visit when they were
-        // redirected to the login page. Use { replace: true } so we don't create
-        // another entry in the history stack for the login page.  This means that
-        // when they get to the protected page and click the back button, they
-        // won't end up back on the login page, which is also really nice for the
-        // user experience.
-        localStorage.setItem("raspi-user", JSON.stringify({ userID: data.userID, email: data.email, token: data.token }));
-        navigate(from, { replace: true });
-      });
-    } else setError(true);
-  }
-
-  return (
-    <>
-      <Login handleSubmit={handleSubmit} />
-      {error ? <h1>BIG PROBLEM LOGGING IN!</h1> : null}
-    </>
-  );
-}
-
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<{ email: string, userID: string, token: string, files: string[] } | null>(null);
+  const [user, setUser] = React.useState<{ email: string, userID: string, token: string, mapped: string[] } | null>(null);
 
   React.useEffect(() => {
     if (localStorage.getItem("raspi-user")) {
@@ -125,7 +85,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signin = (newUser: { email: string, userID: string, token: string, files: string[] }, callback: VoidFunction) => {
+  const signin = (newUser: { email: string, userID: string, token: string, mapped: string[] }, callback: VoidFunction) => {
     return fakeAuthProvider.signin(() => {
       setUser(newUser);
       callback();
@@ -134,13 +94,11 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signout = (callback: VoidFunction) => {
     return fakeAuthProvider.signout(() => {
-      // make request to server to sign out
       setUser(null);
       callback();
     });
   };
 
-  // const value = { user, signin, signout };
 
   return <AuthContext.Provider value={{ user, signin, signout }}>{children}</AuthContext.Provider>;
 }
@@ -148,10 +106,8 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 export default function AuthMain() {
   return (
     <AuthProvider>
-      <h1>Auth Example</h1>
       <Routes>
         <Route element={<Layout />}>
-          {/* <Route path="/" element={<PublicPage />} /> */}
           <Route
             path="/"
             element={
@@ -160,7 +116,7 @@ export default function AuthMain() {
               </RequireAuth>
             }
           />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/createAccount" element={<CreateAccount />} />
         </Route>
       </Routes>

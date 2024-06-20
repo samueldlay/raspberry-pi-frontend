@@ -1,15 +1,17 @@
 import { Button } from "@nextui-org/react";
 import { ReactElement, useState } from "react";
 import { useAuth } from "./Authentication";
+import { getFiles } from "./fetchAPI";
 
 export default function UploadFile(): ReactElement {
   const auth = useAuth();
+  const userFiles = getFiles("/api/files");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [files, setFiles] = useState<string[]>(auth?.user?.files ? auth.user.files : []);
+  // const [files, setFiles] = useState<string[]>(userFiles);
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      console.log("files", event.target.files);
       setSelectedFile(event.target.files[0]);
     }
   };
@@ -24,9 +26,9 @@ export default function UploadFile(): ReactElement {
 
     const formData = new FormData();
     formData.append("file", selectedFile);
-
+    // UP NEXT: UPDATE FILES AFTER UPLOAD
     try {
-      const url = new URL("https://10.0.0.96:8080/upload");
+      const url = new URL("https://10.0.0.96:8080/api/upload");
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -37,8 +39,6 @@ export default function UploadFile(): ReactElement {
       });
 
       if (response.ok) {
-        const serverResponse = await response.json();
-        setFiles(serverResponse);
         setSelectedFile(null);
       }
       else throw new Error(response.statusText);
@@ -58,19 +58,20 @@ export default function UploadFile(): ReactElement {
 
   return (
     <div>
-      <form className="flex flex-col gap-4" onSubmit={handleUpload}>
+      <form className="flex flex-col content-center items-center gap-4" onSubmit={handleUpload}>
         <h2>Upload File</h2>
         {/* <Input type="file" onChange={handleFileChange} /> */}
         <input type="file" id="input" onChange={handleFileChange} />
-        <Button type="submit">Upload</Button>
+        <Button className="w-64" type="submit">Upload</Button>
       </form>
-      <h2>Files in your directory:</h2>
-      {/* <ul>
-        {
-          files?.map(file => <li>{file}</li>)
-        }
-      </ul> */}
-      <pre>{JSON.stringify(files)}</pre>
+      <div className="flex flex-col content-center items-center">
+        <h1 className="text-4xl">Files:</h1>
+        <ul>
+          {
+            userFiles?.map((file, index) => <li className="text-xl" key={file}>{index + 1}.) {file}</li>)
+          }
+        </ul>
+      </div>
     </div>
   );
 }
