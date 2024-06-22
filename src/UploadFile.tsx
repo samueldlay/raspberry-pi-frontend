@@ -66,7 +66,7 @@ export default function UploadFile(): ReactElement {
   if (!auth?.user) return <p>You must be logged in to upload</p>;
 
   return (
-    <div className="">
+    <div className="flex flex-col pb-20">
       <form className="flex flex-col items-center gap-4" onSubmit={handleUpload}>
         <h2>Upload File</h2>
         {/* <Input type="file" onChange={handleFileChange} /> */}
