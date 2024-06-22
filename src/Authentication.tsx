@@ -19,8 +19,11 @@ export function useAuth() {
 }
 
 interface AuthContextType {
-  user: { email: string, userID: string, token: string, mapped: string[] } | null;
-  signin: (user: { email: string, userID: string, token: string, mapped: string[] }, callback: VoidFunction) => void;
+  user: { email: string; userID: string; token: string } | null;
+  signin: (
+    user: { email: string; userID: string; token: string },
+    callback: VoidFunction,
+  ) => void;
   signout: (callback: VoidFunction) => void;
 }
 
@@ -31,17 +34,13 @@ function AuthStatus() {
     return <p>You are not logged in.</p>;
   }
 
-  return (
-    <p>
-      Welcome {auth.user.email}!{" "}
-    </p>
-  );
+  return <p>Welcome {auth.user.email}! </p>;
 }
-// Next: handle signout request
+
 function Layout() {
   const auth = useAuth();
   return (
-    <div className="flex flex-col content-center items-center gap-4">
+    <div className="flex flex-col justify-around items-center gap-4">
       <AuthStatus />
       <h1>{import.meta.env.PROD ? "Production Build" : "Client Build"}</h1>
       <h1>HREF: {window.location.href}</h1>
@@ -50,7 +49,18 @@ function Layout() {
           <li>
             <Link to="/login">Log into your account</Link>
           </li>
-        ) : <li><Link onClick={() => auth.signout(() => localStorage.removeItem("raspi-user"))} to="/">Sign out</Link></li>}
+        ) : (
+          <li>
+            <Link
+              onClick={() =>
+                auth.signout(() => localStorage.removeItem("raspi-user"))
+              }
+              to="/"
+            >
+              Sign out
+            </Link>
+          </li>
+        )}
         <li>
           <Link to="/createAccount">Create an account</Link>
         </li>
@@ -74,7 +84,11 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 }
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<{ email: string, userID: string, token: string, mapped: string[] } | null>(null);
+  const [user, setUser] = React.useState<{
+    email: string;
+    userID: string;
+    token: string;
+  } | null>(null);
 
   React.useEffect(() => {
     if (localStorage.getItem("raspi-user")) {
@@ -87,7 +101,10 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signin = (newUser: { email: string, userID: string, token: string, mapped: string[] }, callback: VoidFunction) => {
+  const signin = (
+    newUser: { email: string; userID: string; token: string },
+    callback: VoidFunction,
+  ) => {
     return fakeAuthProvider.signin(() => {
       setUser(newUser);
       callback();
@@ -101,8 +118,11 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-
-  return <AuthContext.Provider value={{ user, signin, signout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, signin, signout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export default function AuthMain() {
